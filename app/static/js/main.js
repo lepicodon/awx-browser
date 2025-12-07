@@ -28,9 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Theme Init
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-bs-theme', savedTheme);
-    if (savedTheme === 'light') document.body.classList.add('light-mode');
-    if (document.getElementById('themeIcon')) updateThemeIcon();
+    setTheme(savedTheme);
 });
 
 function setupEventListeners() {
@@ -138,14 +136,8 @@ function selectGroup(groupId, element) {
 }
 
 // Data Fetching
+// Data Fetching
 async function loadHosts(inventoryId, groupId = null) {
-    const list = document.getElementById('hostTableBody'); // Make sure HTML ID matches
-    // Note: Template has 'hostTable' with 'hostList' tbody. Let's fix that selector or assume 'hostList'
-    // Actually template says <tbody id="hostList">. I should use hostList.
-    // Wait, the previous main.js used "hostTableBody". I need to be consistent with what I wrote in dashboard.html.
-    // Dashboard HTML edit: <tbody id="hostList" class="border-top-0">
-
-    // Let's use getElementById('hostList')
     const tbody = document.getElementById('hostList') || document.getElementById('hostTableBody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">Loading hosts...</div></td></tr>';
 
@@ -155,29 +147,40 @@ async function loadHosts(inventoryId, groupId = null) {
     let url = `/api/hosts?inventory_id=${inventoryId}`;
     if (groupId) url += `&group_id=${groupId}`;
 
-    const resp = await fetch(url);
-    const data = await resp.json();
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
 
-    allHosts = data.results;
+        allHosts = data.results || [];
 
-    // Reset Sorting & Filtering & Pagination
-    document.getElementById('hostSearch').value = '';
-    currentSort.col = 'name';
-    currentSort.asc = true;
-    updateSortIcons();
-    currentPage = 1;
+        // Reset Sorting & Filtering & Pagination
+        document.getElementById('hostSearch').value = '';
+        currentSort.col = 'name';
+        currentSort.asc = true;
+        updateSortIcons();
+        currentPage = 1;
 
-    filterHosts('');
+        filterHosts('');
+    } catch (e) {
+        console.error("Load hosts failed", e);
+        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">Failed to load hosts: ${e.message}</td></tr>`;
+    }
 }
 
 function filterHosts(query) {
+    if (!allHosts) allHosts = [];
     query = query.toLowerCase();
-    filteredHosts = allHosts.filter(h =>
-        h.name.toLowerCase().includes(query) ||
-        (h.description && h.description.toLowerCase().includes(query))
-    );
-    currentPage = 1; // Reset to page 1 on filter
-    applySort(); // Sorts and renders
+    try {
+        filteredHosts = allHosts.filter(h =>
+            (h.name && h.name.toLowerCase().includes(query)) ||
+            (h.description && h.description.toLowerCase().includes(query))
+        );
+        currentPage = 1; // Reset to page 1 on filter
+        applySort(); // Sorts and renders
+    } catch (e) {
+        console.error("Filter failed", e);
+    }
 }
 
 function sortHosts(col) {
@@ -210,20 +213,20 @@ function updateSortIcons() {
 }
 
 function applySort() {
+    if (!filteredHosts) filteredHosts = [];
     filteredHosts.sort((a, b) => {
         let valA, valB;
         if (currentSort.col === 'name') {
-            valA = a.name.toLowerCase();
-            valB = b.name.toLowerCase();
+            valA = (a.name || '').toLowerCase();
+            valB = (b.name || '').toLowerCase();
         } else if (currentSort.col === 'description') {
             valA = (a.description || '').toLowerCase();
             valB = (b.description || '').toLowerCase();
         } else if (currentSort.col === 'enabled') {
             valA = a.enabled;
             valB = b.enabled;
-        } else if (currentSort.col === 'created') { // Last Job / Created
-            // Using Last Job ID/Status as proxy? Or Created date? 
-            // Header says "Last Job". Let's use last job ID (newest first)
+        } else if (currentSort.col === 'created') {
+            // Last Job ID as proxy
             valA = a.summary_fields.last_job ? a.summary_fields.last_job.id : 0;
             valB = b.summary_fields.last_job ? b.summary_fields.last_job.id : 0;
         }
@@ -261,9 +264,9 @@ function changePage(action) {
 
 function renderPagination() {
     const total = filteredHosts.length;
-    const showingText = document.getElementById('paginationInfo'); // Changed from 'showingText' to 'paginationInfo'
-    const prevBtn = document.getElementById('prevPage'); // Changed from 'prevBtn' to 'prevPage'
-    const nextBtn = document.getElementById('nextPage'); // Changed from 'nextBtn' to 'nextPage'
+    const showingText = document.getElementById('paginationInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
 
     if (!showingText || !prevBtn || !nextBtn) return;
 
@@ -300,45 +303,57 @@ function renderHosts() {
     const list = document.getElementById('hostList') || document.getElementById('hostTableBody');
     if (!list) return;
 
-    // Pagination Slice
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const pageHosts = filteredHosts.slice(start, end);
+    try {
+        // Pagination Slice
+        let pageHosts = [];
+        if (rowsPerPage === 'all') {
+            pageHosts = filteredHosts || [];
+        } else {
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            pageHosts = (filteredHosts || []).slice(start, end);
+        }
 
-    if (pageHosts.length === 0) {
-        list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No hosts found</td></tr>';
+        if (pageHosts.length === 0) {
+            list.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No hosts found</td></tr>';
+            renderPagination();
+            return;
+        }
+
+        list.innerHTML = pageHosts.map(host => {
+            const statusColor = host.enabled ? 'success' : 'secondary';
+            const lastJob = host.summary_fields && host.summary_fields.last_job ? host.summary_fields.last_job : null;
+            const jobStatus = lastJob ? (lastJob.status === 'successful' ? 'success' : 'danger') : 'secondary';
+
+            const lastJobText = lastJob ?
+                `<span class="badge bg-${jobStatus} bg-opacity-10 text-${jobStatus}">
+                    <i class="bi bi-circle-fill" style="font-size: 0.5em;"></i> ${lastJob.id} - ${lastJob.status}
+                 </span>` : '<span class="text-muted text-xs">No jobs run</span>';
+
+            return `
+                <tr onclick="showHostDetails(${host.id})" style="cursor: pointer" class="align-middle">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <span class="status-dot bg-${statusColor} me-2"></span>
+                            <span class="fw-bold text-light">${host.name || 'Unknown'}</span>
+                        </div>
+                    </td>
+                    <td class="text-secondary small">${host.description || '-'}</td>
+                    <td>
+                        <span class="badge bg-${host.enabled ? 'success' : 'secondary'} bg-opacity-10 text-${host.enabled ? 'success' : 'secondary'}">
+                            ${host.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                    </td>
+                    <td>${lastJobText}</td>
+                </tr>
+            `;
+        }).join('');
+
         renderPagination();
-        return;
+    } catch (e) {
+        console.error("Render hosts failed", e);
+        list.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">Error rendering hosts: ${e.message}</td></tr>`;
     }
-
-    list.innerHTML = pageHosts.map(host => {
-        const statusColor = host.enabled ? 'success' : 'secondary';
-        const jobStatus = host.summary_fields.last_job ? (host.summary_fields.last_job.status === 'successful' ? 'success' : 'danger') : 'secondary';
-        const lastJobText = host.summary_fields.last_job ?
-            `<span class="badge bg-${jobStatus} bg-opacity-10 text-${jobStatus}">
-                <i class="bi bi-circle-fill" style="font-size: 0.5em;"></i> ${host.summary_fields.last_job.id} - ${host.summary_fields.last_job.status}
-             </span>` : '<span class="text-muted text-xs">No jobs run</span>';
-
-        return `
-            <tr onclick="showHostDetails(${host.id})" style="cursor: pointer" class="align-middle">
-                <td class="ps-4">
-                    <div class="d-flex align-items-center">
-                        <span class="status-dot bg-${statusColor} me-2"></span>
-                        <span class="fw-bold text-light">${host.name}</span>
-                    </div>
-                </td>
-                <td class="text-secondary small">${host.description || '-'}</td>
-                <td>
-                    <span class="badge bg-${host.enabled ? 'success' : 'secondary'} bg-opacity-10 text-${host.enabled ? 'success' : 'secondary'}">
-                        ${host.enabled ? 'Enabled' : 'Disabled'}
-                    </span>
-                </td>
-                <td>${lastJobText}</td>
-            </tr>
-        `;
-    }).join('');
-
-    renderPagination();
 }
 
 // Host Details & Jobs
@@ -616,20 +631,47 @@ function exportData(format) {
     window.open(url, '_blank');
 }
 
-// Theme
-function toggleTheme() {
-    const isLight = document.body.classList.toggle('light-mode');
-    document.documentElement.setAttribute('data-bs-theme', isLight ? 'light' : 'dark');
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    updateThemeIcon();
+// Theme Management
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    updateThemeUI(theme);
 }
 
-function updateThemeIcon() {
-    const icon = document.getElementById('themeIcon');
-    if (!icon) return;
-    if (document.body.classList.contains('light-mode')) {
-        icon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
-    } else {
-        icon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+function updateThemeUI(theme) {
+    const icon = document.getElementById('currThemeIcon');
+    const label = document.getElementById('currThemeLabel');
+    if (!icon || !label) return;
+
+    // Reset
+    icon.className = '';
+
+    switch (theme) {
+        case 'light':
+            icon.className = 'bi bi-sun-fill';
+            label.innerText = 'Light';
+            break;
+        case 'nord':
+            icon.className = 'bi bi-snow';
+            label.innerText = 'Nord';
+            break;
+        case 'forest':
+            icon.className = 'bi bi-tree-fill';
+            label.innerText = 'Forest';
+            break;
+        case 'sunset':
+            icon.className = 'bi bi-sunset-fill';
+            label.innerText = 'Sunset';
+            break;
+        case 'cyberpunk':
+            icon.className = 'bi bi-lightning-charge-fill';
+            label.innerText = 'Cyberpunk';
+            break;
+        case 'dark':
+        default:
+            icon.className = 'bi bi-moon-stars-fill';
+            label.innerText = 'Midnight';
+            break;
     }
 }
+

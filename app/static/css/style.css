@@ -22,34 +22,102 @@
     --shadow-color: rgba(0, 0, 0, 0.25);
 }
 
-body.light-mode {
+[data-theme="light"] {
     /* Light Theme - "Clean Frost" */
     --bg-gradient-start: #f1f5f9;
-    /* Slate 100 */
     --bg-gradient-end: #e2e8f0;
-    /* Slate 200 */
     --card-bg: rgba(255, 255, 255, 0.85);
-    /* Higher opacity for readability */
     --glass-border: rgba(148, 163, 184, 0.2);
-    /* Slate 400 at 20% */
     --text-primary: #0f172a;
-    /* Slate 900 */
     --text-secondary: #475569;
-    /* Slate 600 - darker for readability */
     --accent: #4f46e5;
-    /* Indigo 600 - stronger contrast */
     --input-bg: #ffffff;
-    /* Pure white inputs */
     --input-focus-bg: #ffffff;
     --table-hover-bg: rgba(0, 0, 0, 0.03);
     --scroll-track: #e2e8f0;
     --scroll-thumb: #94a3b8;
     --shadow-color: rgba(148, 163, 184, 0.15);
-    /* Colored shadow */
 }
 
-/* Background override for light mode */
-body.light-mode {
+[data-theme="nord"] {
+    /* Nord Theme - "Arctic Ice" */
+    --primary-gradient: linear-gradient(135deg, #5e81ac 0%, #88c0d0 100%);
+    --bg-gradient-start: #2e3440;
+    --bg-gradient-end: #3b4252;
+    --card-bg: rgba(59, 66, 82, 0.9);
+    --glass-border: rgba(236, 239, 244, 0.1);
+    --text-primary: #eceff4;
+    --text-secondary: #d8dee9;
+    --accent: #88c0d0;
+    --input-bg: rgba(46, 52, 64, 0.6);
+    --input-focus-bg: rgba(59, 66, 82, 0.9);
+    --table-hover-bg: rgba(236, 239, 244, 0.05);
+    --scroll-track: #2e3440;
+    --scroll-thumb: #4c566a;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="cyberpunk"] {
+    /* Cyberpunk Theme - "Neon Night" */
+    --primary-gradient: linear-gradient(135deg, #f72585 0%, #4361ee 100%);
+    --bg-gradient-start: #0b0014;
+    --bg-gradient-end: #18002a;
+    --card-bg: rgba(20, 0, 35, 0.85);
+    --glass-border: rgba(247, 37, 133, 0.3);
+    /* Neon Pink Border */
+    --text-primary: #4cc9f0;
+    /* Neon Blue */
+    --text-secondary: #f72585;
+    /* Neon Pink */
+    --accent: #f72585;
+    --input-bg: rgba(30, 0, 50, 0.6);
+    --input-focus-bg: rgba(45, 0, 75, 0.9);
+    --table-hover-bg: rgba(247, 37, 133, 0.1);
+    --scroll-track: #0b0014;
+    --scroll-thumb: #4361ee;
+    --shadow-color: rgba(247, 37, 133, 0.25);
+}
+
+[data-theme="forest"] {
+    /* Forest Theme - "Deep Woods" */
+    --primary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --bg-gradient-start: #0f1f18;
+    --bg-gradient-end: #1a2f26;
+    --card-bg: rgba(20, 35, 25, 0.9);
+    --glass-border: rgba(16, 185, 129, 0.15);
+    --text-primary: #e8f5e9;
+    --text-secondary: #86efac;
+    --accent: #34d399;
+    --input-bg: rgba(20, 35, 25, 0.6);
+    --input-focus-bg: rgba(25, 45, 35, 0.9);
+    --table-hover-bg: rgba(16, 185, 129, 0.08);
+    --scroll-track: #0f1f18;
+    --scroll-thumb: #059669;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="sunset"] {
+    /* Sunset Theme - "Vapor Horizon" */
+    --primary-gradient: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    --bg-gradient-start: #1e1b4b;
+    /* Indigo 950 */
+    --bg-gradient-end: #312e81;
+    /* Indigo 900 */
+    --card-bg: rgba(49, 46, 129, 0.85);
+    --glass-border: rgba(249, 115, 22, 0.2);
+    --text-primary: #ffedd5;
+    --text-secondary: #fb923c;
+    --accent: #f97316;
+    --input-bg: rgba(49, 46, 129, 0.6);
+    --input-focus-bg: rgba(67, 56, 202, 0.9);
+    --table-hover-bg: rgba(249, 115, 22, 0.1);
+    --scroll-track: #1e1b4b;
+    --scroll-thumb: #ef4444;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Background override for themes needing flat bg */
+[data-theme="light"] {
     background-color: #f1f5f9;
     background-image: none;
 }
@@ -346,17 +414,17 @@ body {
 */
 
 /* Button Overrides for Light Mode */
-body.light-mode .btn-outline-light {
+[data-theme="light"] .btn-outline-light {
     color: var(--text-secondary);
     border-color: var(--glass-border);
 }
 
-body.light-mode .btn-outline-light:hover {
+[data-theme="light"] .btn-outline-light:hover {
     background: var(--table-hover-bg);
     color: var(--text-primary);
     border-color: var(--accent);
 }
 
-body.light-mode .text-info {
+[data-theme="light"] .text-info {
     color: var(--accent) !important;
 }
