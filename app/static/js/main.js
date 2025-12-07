@@ -611,8 +611,8 @@ function exportData(format) {
         alert("Please select an inventory first.");
         return;
     }
-    let url = `/export?format = ${format}& inventory_id=${currentInventoryId} `;
-    if (currentGroupId) url += `& group_id=${currentGroupId} `;
+    let url = `/export?format=${format}&inventory_id=${currentInventoryId}`;
+    if (currentGroupId) url += `&group_id=${currentGroupId}`;
     window.open(url, '_blank');
 }
 

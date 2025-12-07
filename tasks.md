@@ -1,0 +1,81 @@
+# Task: Create AWX Browser App
+
+- [x] Project Initialization
+    - [x] Create project structure (Flask)
+    - [x] Setup virtual environment and dependencies
+- [x] Core Implementation
+    - [x] Implement Authentication (Login UI + Logic)
+    - [x] Create AWX Service Adapter (API interactions)
+    - [x] Implement Main Dashboard (Layout, Sidebar)
+    - [x] Implement Host List View (Sorting, Filtering)
+    - [x] Implement Host Details Modal (JSON/YAML toggle)
+    - [x] Implement Export Functionality (CSV, Excel, HTML)
+- [x] UI/UX Polish
+    - [x] Apply "Premium" visual design (CSS)
+    - [x] Ensure responsive layout
+- [x] Refinements
+    - [x] Add Logo and Theme Toggle
+    - [x] Implement Client-side Sorting
+    - [x] UI Fixes
+    - [x] Fix Export Dropdown z-index
+    - [x] Improve Active Group styling
+- [x] Verification
+    - [x] Manual verification flow
+- [x] Containerization
+    - [x] Create Dockerfile and .dockerignore
+    - [x] Update documentation
+    - [x] Create project README.md
+- [x] V2 Features
+    - [x] Implement Job History Tab in Host Modal
+    - [x] Implement Interactive Inventory Graph
+- [x] Refine Host Modal
+    - [x] Split into Details, Variables, Jobs tabs
+    - [x] Fix Invalid Date issue
+    - [x] Verify Job History data
+- [x] Refine Host Modal V2
+    - [x] Improve Variables parsing (string vs object)
+    - [x] Fix Job History Status and Finished fields
+- [x] UI Enhancements
+    - [x] Add Copy button to Variables tab
+- [x] Implement Host Pagination
+    - [x] Add Pagination controls to Dashboard HTML
+    - [x] Implement Pagination logic in JS (State, Events)
+    - [x] Update renderHosts to support paging
+- [x] UI Cleanup
+    - [x] Fix Host Table Alignment
+    - [x] Fix Host Table Alignment
+    - [x] Remove Actions Column
+- [x] Remove Interactive Graph
+- [x] Theme Refinement
+    - [x] Improve Light Mode Contrast/Readability
+    - [x] Polish Dark Mode Variables
+    - [x] Clean Search/Header Light Mode
+    - [x] Reduce Pagination Footer Height
+- [x] Final UI Polish
+    - [x] Remove Background Gradients
+    - [x] Slimmer Pagination Footer
+    - [x] "All" Rows Option
+- [x] Debugging
+    - [x] Fix JS Main Syntax Errors
+    - [x] Fix Organization List Not Populating
+    - [x] Fix JS Syntax Error (Line 39)
+- [x] Git Repository
+    - [x] Initialize and Commit Locally
+- [x] Feature: Ansible Facts Viewer
+    - [x] Backend: Add get_host_facts service and route
+    - [x] Frontend: Add Facts Tab to Host Modal
+    - [x] Frontend: Implement logic to fetch and render facts
+- [x] Feature: Collapsible Facts
+    - [x] Add CSS for JSON tree
+    - [x] Implement Recursive JSON Renderer in JS
+- [x] Debugging
+    - [x] Fix JS Syntax Error in loadHostFacts
+    - [x] Fix Pagination Arrows
+    - [x] Fix Export "Inventory ID required" Error
+    - [x] Fix Excel Export "Invalid format"
+- [x] Kubernetes Support
+    - [x] Make AWX URL Configurable via Env Var (Pre-fill Login)
+    - [x] Create k8s deployment.yaml
+    - [x] Update README with K8s instructions
+- [x] Fix Login Loop
+    - [x] Prevent main.js init on login page

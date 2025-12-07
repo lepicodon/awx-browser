@@ -165,7 +165,7 @@ def export_hosts():
             headers={"Content-disposition": "attachment; filename=hosts_export.csv"}
         )
         
-    elif fmt == 'excel':
+    elif fmt == 'excel' or fmt == 'xlsx':
         wb = Workbook()
         ws = wb.active
         ws.append(headers)
