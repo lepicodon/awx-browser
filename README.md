@@ -35,14 +35,14 @@ A modern, premium-designed web interface for visualizing and interacting with yo
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/awx-browser.git
+    git clone https://github.com/lepicodon/awx-browser.git
     cd awx-browser
     ```
 
 2. **Create a virtual environment**:
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+    conda create -n awx-browser python=3.12
+    conda activate awx-browser
     ```
 
 3. **Install dependencies**:
@@ -96,4 +96,4 @@ This application is container-ready and stateless.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
