@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: awx-browser
+  labels:
+    app: awx-browser
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: awx-browser
+  template:
+    metadata:
+      labels:
+        app: awx-browser
+    spec:
+      containers:
+      - name: awx-browser
+        image: awx-browser:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_SECRET_KEY
+          value: "change-me-in-production"
+        - name: AWX_BASE_URL
+          value: "https://awx.example.com"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: awx-browser
+spec:
+  selector:
+    app: awx-browser
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP

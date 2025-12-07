@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AWX Browser{% endblock %}
+
+{% block content %}
+<div class="d-flex h-100 min-vh-100 flex-column flex-md-row">
+    <!-- Sidebar -->
+    <div class="sidebar glass-effect p-3 d-flex flex-column h-md-100" style="min-width: 300px; max-width: 350px;">
+        <div class="d-flex align-items-center mb-4 px-2">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="40" height="40" class="me-3">
+            <h5 class="mb-0 text-gradient fw-bold">AWX Browser</h5>
+        </div>
+
+        <div class="mb-3">
+            <label class="text-xs text-uppercase text-muted fw-bold mb-1">Organization</label>
+            <select class="form-select form-select-sm" id="orgSelect">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="text-xs text-uppercase text-muted fw-bold mb-1">Inventory</label>
+            <select class="form-select form-select-sm" id="invSelect" disabled>
+                <option value="">Select Organization first</option>
+            </select>
+        </div>
+
+        <hr class="border-secondary opacity-25 my-2">
+
+        <label class="text-xs text-uppercase text-muted fw-bold mb-2">Groups</label>
+        <div class="flex-grow-1 overflow-auto custom-scrollbar" id="groupTree">
+            <div class="text-center text-muted py-5 text-sm">
+                <i class="bi bi-arrow-left-circle mb-2 d-block"></i>
+                Select an inventory to view groups
+            </div>
+        </div>
+
+        <div class="mt-auto pt-3 border-top border-secondary border-opacity-25">
+            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-dark bg-opacity-50">
+                <div class="d-flex align-items-center">
+                    <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center"
+                        style="width:32px; height:32px">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <small class="mb-0 text-light">{{ session.auth_info.username or 'Token User' }}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-link text-muted me-1" onclick="toggleTheme()" title="Toggle Theme">
+                        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                    </button>
+                    <a href="{{ url_for('main.logout') }}" class="btn btn-sm btn-outline-danger border-0"
+                        title="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1 p-3 p-md-4 d-flex flex-column" style="overflow: visible;">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary"></i>
+                <input type="text" id="hostSearch"
+                    class="form-control form-control-sm border-secondary border-opacity-25 ps-5 rounded-pill"
+                    placeholder="Search hosts..." style="width: 300px;">
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow-sm">
+                    <li><a class="dropdown-item" href="#" onclick="exportData('csv')"><i
+                                class="bi bi-filetype-csv me-2"></i>CSV</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportData('xlsx')"><i
+                                class="bi bi-file-earmark-spreadsheet me-2"></i>Excel</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportData('html')"><i
+                                class="bi bi-filetype-html me-2"></i>HTML Report</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- content table -->
+        <div class="glass-effect flex-grow-1 overflow-hidden d-flex flex-column p-0">
+            <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+                <table class="table table-dark table-hover table-borderless align-middle mb-0" id="hostTable">
+                    <thead class="sticky-top">
+                        <tr
+                            class="text-secondary text-uppercase text-xs tracking-wider border-bottom border-secondary border-opacity-25">
+                            <th class="py-3 cursor-pointer sort-col" data-sort="name" onclick="sortHosts('name')">
+                                Hostname <i class="bi bi-arrow-down-up ms-1 text-muted sort-icon"></i>
+                            </th>
+                            <th class="py-3 cursor-pointer sort-col" data-sort="description"
+                                onclick="sortHosts('description')">
+                                Description <i class="bi bi-arrow-down-up ms-1 text-muted sort-icon"></i>
+                            </th>
+                            <th class="py-3 cursor-pointer sort-col" data-sort="enabled" onclick="sortHosts('enabled')">
+                                Status <i class="bi bi-arrow-down-up ms-1 text-muted sort-icon"></i>
+                            </th>
+                            <th class="py-3 cursor-pointer sort-col" data-sort="created" onclick="sortHosts('created')">
+                                Last Job <i class="bi bi-arrow-down-up ms-1 text-muted sort-icon"></i>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="hostList" class="border-top-0">
+                        <!-- Hosts rendered here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="glass-effect mt-3 py-1 px-3 d-flex justify-content-between align-items-center"
+                id="paginationFooter">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="text-secondary text-xs text-uppercase mb-0">Rows:</label>
+                        <select class="form-select form-select-sm border-secondary border-opacity-25"
+                            style="width: 70px;" id="rowsPerPage" onchange="changePageSize(this.value)">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <span class="text-muted text-sm" id="paginationInfo">Showing 0-0 of 0</span>
+                </div>
+                <nav aria-label="Host list pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled" id="prevPage">
+                            <a class="page-link bg-transparent border-0 text-secondary" href="#"
+                                onclick="changePage('prev')"><i class="bi bi-chevron-left"></i></a>
+                        </li>
+                        <li class="page-item disabled" id="nextPage">
+                            <a class="page-link bg-transparent border-0 text-secondary" href="#"
+                                onclick="changePage('next')"><i class="bi bi-chevron-right"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="hostModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="blur">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content glass-effect border-0">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title" id="hostModalLabel">Host Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="nav nav-tabs nav-justified border-bottom-0 mt-3 px-3" id="hostTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab"
+                            data-bs-target="#details-pane" type="button" role="tab">Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="variables-tab" data-bs-toggle="tab"
+                            data-bs-target="#variables-pane" type="button" role="tab">Variables</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs-pane"
+                            type="button" role="tab" onclick="loadHostJobs()">Job History</button>
+                    </li>
+                </ul>
+                <div class="tab-content p-3" id="hostTabContent">
+                    <div class="tab-pane fade show active" id="details-pane" role="tabpanel">
+                        <div id="hostDetailsContent"></div>
+                    </div>
+                    <div class="tab-pane fade" id="variables-pane" role="tabpanel">
+                        <div id="hostVariablesContent"></div>
+                    </div>
+                    <div class="tab-pane fade" id="jobs-pane" role="tabpanel">
+                        <div id="hostJobsContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

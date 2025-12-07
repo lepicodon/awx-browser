@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Login - AWX Browser{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-100">
+    <div class="login-card p-4 p-md-5 glass-effect fade-in-up">
+        <div class="text-center mb-4">
+            <h1 class="display-6 fw-bold mb-0 text-gradient">AWX Browser</h1>
+            <p class="text-muted">Connect to your inventory</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('main.login') }}" method="POST">
+            <div class="mb-4">
+                <label for="awx_url" class="form-label text-uppercase text-xs fw-bold tracking-wider">AWX URL</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-globe"></i></span>
+                    <input type="url" class="form-control border-start-0 ps-0" id="awx_url" name="awx_url"
+                        placeholder="https://awx.example.com" required value="{{ prev_url }}">
+                </div>
+            </div>
+
+            <!-- Login Method Switcher -->
+            <ul class="nav nav-pills nav-fill mb-4 custom-pills" id="authTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="token-tab" data-bs-toggle="tab" data-bs-target="#token-pane"
+                        type="button" role="tab" aria-selected="true" onclick="setAuthMode('token')">Token</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-pane"
+                        type="button" role="tab" aria-selected="false"
+                        onclick="setAuthMode('credentials')">Credentials</button>
+                </li>
+            </ul>
+            <input type="hidden" name="auth_mode" id="auth_mode" value="token">
+
+            <div class="tab-content mb-4" id="authTabContent">
+                <div class="tab-pane fade show active" id="token-pane" role="tabpanel" tabindex="0">
+                    <div class="mb-3">
+                        <label for="token" class="form-label text-uppercase text-xs fw-bold tracking-wider">Access
+                            Token</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-key"></i></span>
+                            <input type="password" class="form-control border-start-0 ps-0" id="token" name="token"
+                                placeholder="Personal Access Token">
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="user-pane" role="tabpanel" tabindex="0">
+                    <div class="mb-3">
+                        <label for="username"
+                            class="form-label text-uppercase text-xs fw-bold tracking-wider">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"><i
+                                    class="bi bi-person"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="username" name="username"
+                                placeholder="AD User">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password"
+                            class="form-label text-uppercase text-xs fw-bold tracking-wider">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control border-start-0 ps-0" id="password"
+                                name="password" placeholder="Password">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-lg shadow-sm">Connect</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function setAuthMode(mode) {
+        document.getElementById('auth_mode').value = mode;
+    }
+</script>
+{% endblock %}
