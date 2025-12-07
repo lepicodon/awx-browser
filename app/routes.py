@@ -100,6 +100,12 @@ def get_host_jobs(host_id):
     service = _get_service()
     return {'results': service.get_host_jobs(host_id)}
 
+@main_bp.route('/api/hosts/<int:host_id>/facts')
+def get_host_facts(host_id):
+    if 'auth_info' not in session: return {'error': 'Unauthorized'}, 401
+    service = _get_service()
+    return service.get_host_facts(host_id)
+
 @main_bp.route('/logout')
 def logout():
     session.pop('auth_info', None)

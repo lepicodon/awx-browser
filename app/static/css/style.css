@@ -121,10 +121,71 @@ body {
 
 /* Form Controls */
 .form-control,
-.form-select {
+.code-block {
     background: var(--input-bg);
     border: 1px solid var(--glass-border);
     color: var(--text-primary);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+}
+
+/* JSON Tree Styles */
+.json-tree {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.json-tree .toggle {
+    cursor: pointer;
+    user-select: none;
+    margin-right: 4px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.json-tree .toggle.down {
+    transform: rotate(90deg);
+}
+
+.json-tree .nested {
+    display: none;
+    padding-left: 20px;
+    border-left: 1px solid var(--glass-border);
+}
+
+.json-tree .nested.show {
+    display: block;
+}
+
+.json-tree .key {
+    color: #a5b4fc;
+    /* Indigo-ish light */
+}
+
+.json-tree .string {
+    color: #86efac;
+    /* Green-ish */
+}
+
+.json-tree .number {
+    color: #fca5a5;
+    /* Red-ish */
+}
+
+.json-tree .boolean {
+    color: #fcd34d;
+    /* Yellow-ish */
+}
+
+.json-tree .null {
+    color: #94a3b8;
+    /* Slate */
+}
+
+.form-control,
+.form-select {
     padding: 0.75rem 1rem;
     border-radius: 8px;
     transition: all 0.3s ease;

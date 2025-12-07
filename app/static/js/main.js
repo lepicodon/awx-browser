@@ -247,9 +247,10 @@ function changePageSize(size) {
     renderHosts();
 }
 
-function changePage(delta) {
+function changePage(action) {
     if (rowsPerPage === 'all') return; // No pagination in 'all' mode
 
+    const delta = (action === 'next' || action === 1) ? 1 : -1;
     const maxPage = Math.ceil(filteredHosts.length / rowsPerPage);
     const newPage = currentPage + delta;
     if (newPage >= 1 && newPage <= maxPage) {
@@ -349,6 +350,7 @@ async function showHostDetails(hostId) {
     document.getElementById('details-tab').click();
     document.getElementById('hostDetailsContent').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
     document.getElementById('hostVariablesContent').innerHTML = '';
+    document.getElementById('hostFactsContent').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
     document.getElementById('hostJobsContent').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
     currentHostId = hostId;
 
@@ -459,6 +461,128 @@ async function loadHostJobs() {
     `;
 }
 
+async function loadHostFacts() {
+    if (!currentHostId) return;
+    const container = document.getElementById('hostFactsContent');
+
+    // Check if check already loaded? No, let's refresh every time or check if empty?
+    // Let's refresh to be safe or simple check: if not spinner
+    // For now, simple fetch.
+
+    // Re-add spinner if needed (optional since showHostDetails did it, but switching tabs might not)
+    // Actually showHostDetails resets it. But if I clicked Facts, then Jobs using the spinner, then back to Facts... 
+    // Let's set spinner.
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+
+    try {
+        const resp = await fetch(`/api/hosts/${currentHostId}/facts`);
+        if (!resp.ok) throw new Error('Failed to load facts');
+
+        const data = await resp.json();
+
+        // Facts are usually in keys like "ansible_facts" or just root.
+        // AWX /ansible_facts/ endpoint usually returns the facts dict directly (or key 'ansible_facts'?)
+        // Let's assume the whole JSON is the facts or contains them.
+
+        if (!data || Object.keys(data).length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3">No facts collected for this host.</div>';
+            return;
+        }
+
+        const jsonStr = JSON.stringify(data, null, 2);
+        const treeHtml = buildJsonTree(data);
+
+        container.innerHTML = `
+            <div class="d-flex justify-content-end mb-2 gap-2">
+                 <button class="btn btn-sm btn-outline-light" onclick="expandAllFacts()" title="Expand All">
+                    <i class="bi bi-arrows-expand"></i>
+                </button>
+                 <button class="btn btn-sm btn-outline-light" onclick="collapseAllFacts()" title="Collapse All">
+                    <i class="bi bi-arrows-collapse"></i>
+                </button>
+                 <button class="btn btn-sm btn-outline-light" onclick="copyToClipboard(this)" data-content='${jsonStr.replace(/'/g, "&#39;")}' title="Copy to Clipboard">
+                    <i class="bi bi-clipboard"></i> Copy
+                </button>
+            </div>
+            <div class="code-block p-3 rounded" style="max-height: 600px; overflow: auto;">
+                <div class="json-tree" id="factsTree">${treeHtml}</div>
+            </div>
+        `;
+
+    } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Error loading facts: ${e.message}</div>`;
+    }
+}
+
+// JSON Tree Helpers
+function buildJsonTree(data) {
+    let html = '';
+    if (typeof data === 'object' && data !== null) {
+        const keys = Object.keys(data);
+
+        keys.forEach((key) => {
+            const value = data[key];
+            const isObj = typeof value === 'object' && value !== null;
+            const hasChildren = isObj && Object.keys(value).length > 0;
+
+            html += `<div class="item">`;
+
+            if (hasChildren) {
+                html += `<span class="toggle bi bi-caret-right-fill" onclick="toggleJson(this)"></span>`;
+            } else {
+                html += `<span class="toggle" style="opacity:0; pointer-events:none; margin-right:4px;">&nbsp;</span>`;
+            }
+
+            html += `<span class="key">${key}:</span> `;
+
+            if (isObj) {
+                const count = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value).length}}`;
+                html += `<span class="text-muted text-xs ms-1">${count}</span>`;
+                if (hasChildren) {
+                    html += `<div class="nested">${buildJsonTree(value)}</div>`;
+                } else {
+                    html += `<span class="text-muted">{}</span>`;
+                }
+            } else {
+                let type = typeof value;
+                if (value === null) type = 'null';
+                let displayVal = value;
+                if (type === 'string') displayVal = `"${value}"`;
+
+                html += `<span class="${type}">${displayVal}</span>`;
+            }
+            html += `</div>`;
+        });
+    }
+    return html;
+}
+
+function toggleJson(el) {
+    el.classList.toggle('down');
+    el.parentElement.querySelector('.nested').classList.toggle('show');
+}
+
+function expandAllFacts() {
+    document.querySelectorAll('#factsTree .nested').forEach(el => el.classList.add('show'));
+    document.querySelectorAll('#factsTree .toggle').forEach(el => el.classList.add('down'));
+}
+
+function collapseAllFacts() {
+    document.querySelectorAll('#factsTree .nested').forEach(el => el.classList.remove('show'));
+    document.querySelectorAll('#factsTree .toggle').forEach(el => el.classList.remove('down'));
+}
+
+// Helper for copy (if not exists, I should add it, but I have copyVariables. Let's make a generic one or use specific)
+// I'll add a generic one below or use a closure.
+function copyToClipboard(btn) {
+    const content = btn.getAttribute('data-content');
+    navigator.clipboard.writeText(content).then(() => {
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check';
+        setTimeout(() => icon.className = 'bi bi-clipboard', 2000);
+    });
+}
+
 function copyVariables(btn) {
     const content = document.getElementById('varsOutput').innerText;
     navigator.clipboard.writeText(content).then(() => {
@@ -487,8 +611,8 @@ function exportData(format) {
         alert("Please select an inventory first.");
         return;
     }
-    let url = `/export?format=${format}&inventory_id=${currentInventoryId}`;
-    if (currentGroupId) url += `&group_id=${currentGroupId}`;
+    let url = `/export?format = ${format}& inventory_id=${currentInventoryId} `;
+    if (currentGroupId) url += `& group_id=${currentGroupId} `;
     window.open(url, '_blank');
 }
 

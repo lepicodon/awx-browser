@@ -165,6 +165,10 @@
                             data-bs-target="#variables-pane" type="button" role="tab">Variables</button>
                     </li>
                     <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="facts-tab" data-bs-toggle="tab" data-bs-target="#facts-pane"
+                            type="button" role="tab" onclick="loadHostFacts()">Facts</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
                         <button class="nav-link" id="jobs-tab" data-bs-toggle="tab" data-bs-target="#jobs-pane"
                             type="button" role="tab" onclick="loadHostJobs()">Job History</button>
                     </li>
@@ -175,6 +179,13 @@
                     </div>
                     <div class="tab-pane fade" id="variables-pane" role="tabpanel">
                         <div id="hostVariablesContent"></div>
+                    </div>
+                    <div class="tab-pane fade" id="facts-pane" role="tabpanel">
+                        <div id="hostFactsContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="jobs-pane" role="tabpanel">
                         <div id="hostJobsContent">

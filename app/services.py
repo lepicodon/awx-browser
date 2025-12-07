@@ -84,3 +84,9 @@ class AWXService:
         # Or /api/v2/hosts/{id}/job_events/ ? No, summaries is better for high level list 'last job' type stuff
         # actually /api/v2/hosts/{id}/job_host_summaries/ returns the list of jobs this host was part of.
         return self._get_all_pages(f"{self.base_url}/api/v2/hosts/{host_id}/job_host_summaries/")
+
+    def get_host_facts(self, host_id):
+        response = self.session.get(f"{self.base_url}/api/v2/hosts/{host_id}/ansible_facts/")
+        if response.status_code == 200:
+            return response.json()
+        return {} # Return empty dict if no facts or error (or raise?) Let's return empty for now to avoid crash
