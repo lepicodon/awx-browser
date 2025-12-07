@@ -76,13 +76,18 @@ def get_group_children(group_id):
 
 @main_bp.route('/api/hosts')
 def get_hosts():
-    if 'auth_info' not in session: return {'error': 'Unauthorized'}, 401
+    if 'auth_info' not in session:
+        return {'error': 'Unauthorized'}, 401
+    
     inventory_id = request.args.get('inventory_id')
     group_id = request.args.get('group_id')
     
-    if not inventory_id:
-        return {'error': 'Inventory ID required'}, 400
-        
+    # Input Validation
+    if not inventory_id or not inventory_id.isdigit():
+         return {'error': 'Invalid Inventory ID'}, 400
+    if group_id and not group_id.isdigit():
+         return {'error': 'Invalid Group ID'}, 400
+
     service = _get_service()
     hosts = service.get_hosts(inventory_id, group_id)
     return {'results': hosts}

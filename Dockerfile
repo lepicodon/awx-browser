@@ -2,9 +2,6 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (if any are needed for pyyaml or others, usually none for pure python libs, but gcc sometimes needed for some versions)
-# For this stack, pure python should suffice.
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

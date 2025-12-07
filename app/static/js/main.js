@@ -16,6 +16,17 @@ let currentSort = {
     asc: true
 };
 
+// Utils
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Auth Check & Init
 document.addEventListener('DOMContentLoaded', () => {
     // Only run dashboard logic on dashboard page
@@ -70,7 +81,7 @@ async function loadOrganizations() {
         select.innerHTML = '<option value="">Select Organization...</option>';
         if (data.results && data.results.length > 0) {
             data.results.forEach(org => {
-                select.innerHTML += `<option value="${org.id}">${org.name}</option>`;
+                select.innerHTML += `<option value="${escapeHtml(org.id)}">${escapeHtml(org.name)}</option>`;
             });
         } else {
             select.innerHTML = '<option value="">No organizations found</option>';
@@ -92,7 +103,7 @@ async function loadInventories(orgId) {
     const data = await resp.json();
 
     data.results.forEach(inv => {
-        select.innerHTML += `<option value="${inv.id}">${inv.name}</option>`;
+        select.innerHTML += `<option value="${escapeHtml(inv.id)}">${escapeHtml(inv.name)}</option>`;
     });
     select.disabled = false;
 }
@@ -119,10 +130,10 @@ function buildGroupTree(groups, level = 0) {
     groups.forEach(group => {
         const padding = level * 20 + 10;
         html += `
-            <div class="group-item" onclick="selectGroup(${group.id}, this)" style="padding-left: ${padding}px" id="group-${group.id}">
-                <i class="bi bi-folder"></i> ${group.name}
+            <div class="group-item" onclick="selectGroup(${escapeHtml(group.id)}, this)" style="padding-left: ${padding}px" id="group-${escapeHtml(group.id)}">
+                <i class="bi bi-folder"></i> ${escapeHtml(group.name)}
             </div>
-            <div id="children-${group.id}" class="group-children collapse show"></div>
+            <div id="children-${escapeHtml(group.id)}" class="group-children collapse show"></div>
         `;
     });
     return html;
@@ -326,19 +337,19 @@ function renderHosts() {
             const jobStatus = lastJob ? (lastJob.status === 'successful' ? 'success' : 'danger') : 'secondary';
 
             const lastJobText = lastJob ?
-                `<span class="badge bg-${jobStatus} bg-opacity-10 text-${jobStatus}">
-                    <i class="bi bi-circle-fill" style="font-size: 0.5em;"></i> ${lastJob.id} - ${lastJob.status}
+                `<span class="badge bg-${escapeHtml(jobStatus)} bg-opacity-10 text-${escapeHtml(jobStatus)}">
+                    <i class="bi bi-circle-fill" style="font-size: 0.5em;"></i> ${escapeHtml(lastJob.id)} - ${escapeHtml(lastJob.status)}
                  </span>` : '<span class="text-muted text-xs">No jobs run</span>';
 
             return `
-                <tr onclick="showHostDetails(${host.id})" style="cursor: pointer" class="align-middle">
+                <tr onclick="showHostDetails(${escapeHtml(host.id)})" style="cursor: pointer" class="align-middle">
                     <td class="ps-4">
                         <div class="d-flex align-items-center">
-                            <span class="status-dot bg-${statusColor} me-2"></span>
-                            <span class="fw-bold text-light">${host.name || 'Unknown'}</span>
+                            <span class="status-dot bg-${escapeHtml(statusColor)} me-2"></span>
+                            <span class="fw-bold text-light">${escapeHtml(host.name || 'Unknown')}</span>
                         </div>
                     </td>
-                    <td class="text-secondary small">${host.description || '-'}</td>
+                    <td class="text-secondary small">${escapeHtml(host.description || '-')}</td>
                     <td>
                         <span class="badge bg-${host.enabled ? 'success' : 'secondary'} bg-opacity-10 text-${host.enabled ? 'success' : 'secondary'}">
                             ${host.enabled ? 'Enabled' : 'Disabled'}
@@ -379,16 +390,16 @@ async function showHostDetails(hostId) {
     const detailsHtml = `
         <h6 class="text-secondary text-uppercase text-xs tracking-wider mb-3">Configuration</h6>
         <table class="table table-borderless table-sm text-light">
-            <tr><td class="text-secondary" style="width: 150px">ID:</td><td>${data.id}</td></tr>
-            <tr><td class="text-secondary">Name:</td><td>${data.name}</td></tr>
-            <tr><td class="text-secondary">Description:</td><td>${data.description || '-'}</td></tr>
+            <tr><td class="text-secondary" style="width: 150px">ID:</td><td>${escapeHtml(data.id)}</td></tr>
+            <tr><td class="text-secondary">Name:</td><td>${escapeHtml(data.name)}</td></tr>
+            <tr><td class="text-secondary">Description:</td><td>${escapeHtml(data.description || '-')}</td></tr>
             <tr><td class="text-secondary">Enabled:</td><td>
                 <span class="badge bg-${data.enabled ? 'success' : 'secondary'} bg-opacity-10 text-${data.enabled ? 'success' : 'secondary'}">
                     ${data.enabled ? 'True' : 'False'}
                 </span>
             </td></tr>
-             <tr><td class="text-secondary">Created:</td><td>${createdDate}</td></tr>
-             <tr><td class="text-secondary">Modified:</td><td>${modifiedDate}</td></tr>
+             <tr><td class="text-secondary">Created:</td><td>${escapeHtml(createdDate)}</td></tr>
+             <tr><td class="text-secondary">Modified:</td><td>${escapeHtml(modifiedDate)}</td></tr>
         </table>
     `;
     document.getElementById('hostDetailsContent').innerHTML = detailsHtml;
@@ -403,9 +414,10 @@ async function showHostDetails(hostId) {
     let varsHtml = '';
     try {
         const jsonStr = JSON.stringify(varsObj, null, 2);
-        varsHtml = `<pre class="code-block p-3 rounded" style="max-height: 500px; overflow: auto;" id="varsOutput">${jsonStr}</pre>`;
+        // JSON.stringify needs to be escaped for HTML context
+        varsHtml = `<pre class="code-block p-3 rounded" style="max-height: 500px; overflow: auto;" id="varsOutput">${escapeHtml(jsonStr)}</pre>`;
     } catch (e) {
-        varsHtml = '<div class="alert alert-warning">Could not parse variables</div>';
+        varsHtml = `<div class="alert alert-warning">Could not parse variables: ${escapeHtml(e.message)}</div>`;
     }
 
     const b64Vars = btoa(JSON.stringify(varsObj));
@@ -431,6 +443,7 @@ async function showHostDetails(hostId) {
 }
 
 let currentHostId = null;
+let currentHostFacts = null;
 async function loadHostJobs() {
     if (!currentHostId) return;
     const container = document.getElementById('hostJobsContent');
@@ -494,21 +507,36 @@ async function loadHostFacts() {
         if (!resp.ok) throw new Error('Failed to load facts');
 
         const data = await resp.json();
-
-        // Facts are usually in keys like "ansible_facts" or just root.
-        // AWX /ansible_facts/ endpoint usually returns the facts dict directly (or key 'ansible_facts'?)
-        // Let's assume the whole JSON is the facts or contains them.
+        currentHostFacts = data; // Store for searching
 
         if (!data || Object.keys(data).length === 0) {
             container.innerHTML = '<div class="text-center text-muted py-3">No facts collected for this host.</div>';
             return;
         }
 
-        const jsonStr = JSON.stringify(data, null, 2);
-        const treeHtml = buildJsonTree(data);
+        renderFactsTree(data);
 
-        container.innerHTML = `
-            <div class="d-flex justify-content-end mb-2 gap-2">
+    } catch (e) {
+        container.innerHTML = `<div class="alert alert-danger">Error loading facts: ${e.message}</div>`;
+    }
+}
+
+function renderFactsTree(data) {
+    const container = document.getElementById('hostFactsContent');
+    const jsonStr = JSON.stringify(currentHostFacts, null, 2); // Copy original full data
+    const treeHtml = buildJsonTree(data);
+
+    // If we are re-rendering (searching), preserve the input value
+    const searchInput = document.getElementById('factsSearch');
+    const minSearchVal = searchInput ? searchInput.value : '';
+
+    container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+             <div class="input-group input-group-sm" style="max-width: 300px;">
+                <span class="input-group-text bg-transparent border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                <input type="text" id="factsSearch" class="form-control bg-transparent border-secondary text-light" placeholder="Search facts..." value="${escapeHtml(minSearchVal)}" oninput="handleFactsSearch(this.value)">
+             </div>
+             <div class="d-flex gap-2">
                  <button class="btn btn-sm btn-outline-light" onclick="expandAllFacts()" title="Expand All">
                     <i class="bi bi-arrows-expand"></i>
                 </button>
@@ -519,14 +547,86 @@ async function loadHostFacts() {
                     <i class="bi bi-clipboard"></i> Copy
                 </button>
             </div>
-            <div class="code-block p-3 rounded" style="max-height: 600px; overflow: auto;">
-                <div class="json-tree" id="factsTree">${treeHtml}</div>
-            </div>
-        `;
+        </div>
+        <div class="code-block p-3 rounded" style="max-height: 600px; overflow: auto;">
+            <div class="json-tree" id="factsTree">${treeHtml || '<div class="text-muted fst-italic">No matching facts found</div>'}</div>
+        </div>
+    `;
 
-    } catch (e) {
-        container.innerHTML = `<div class="alert alert-danger">Error loading facts: ${e.message}</div>`;
+    // Restore focus if searching
+    if (minSearchVal) {
+        const newInput = document.getElementById('factsSearch');
+        newInput.focus();
+        // Move cursor to end
+        const len = newInput.value.length;
+        newInput.setSelectionRange(len, len);
+
+        // Auto-expand results when searching
+        expandAllFacts();
     }
+}
+
+let factsSearchTimeout = null;
+function handleFactsSearch(query) {
+    clearTimeout(factsSearchTimeout);
+    factsSearchTimeout = setTimeout(() => {
+        if (!query.trim()) {
+            renderFactsTree(currentHostFacts);
+            return;
+        }
+        const filtered = filterFactsData(currentHostFacts, query);
+        renderFactsTree(filtered);
+    }, 300);
+}
+
+function filterFactsData(data, query) {
+    if (!data) return null;
+    query = query.toLowerCase();
+
+    // Helper to check if value is primitive and matches
+    const isPrimitiveMatch = (val) => {
+        return (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') &&
+            String(val).toLowerCase().includes(query);
+    };
+
+    if (Array.isArray(data)) {
+        const filtered = data.map(item => filterFactsData(item, query)).filter(item => item !== null);
+        return filtered.length > 0 ? filtered : null;
+    }
+
+    if (typeof data === 'object' && data !== null) {
+        const result = {};
+        let hasMatch = false;
+
+        for (const [key, value] of Object.entries(data)) {
+            // Match Key
+            if (key.toLowerCase().includes(query)) {
+                result[key] = value; // Include full subtree if key matches
+                hasMatch = true;
+                continue;
+            }
+
+            // Match Value (Primitive)
+            if (isPrimitiveMatch(value)) {
+                result[key] = value;
+                hasMatch = true;
+                continue;
+            }
+
+            // Recurse for Objects/Arrays
+            if (typeof value === 'object' && value !== null) {
+                const filteredChild = filterFactsData(value, query);
+                if (filteredChild !== null) {
+                    result[key] = filteredChild;
+                    hasMatch = true;
+                }
+            }
+        }
+        return hasMatch ? result : null;
+    }
+
+    // Top-level primitive check (shouldn't happen for Facts root, but good for completeness)
+    return isPrimitiveMatch(data) ? data : null;
 }
 
 // JSON Tree Helpers
@@ -548,7 +648,7 @@ function buildJsonTree(data) {
                 html += `<span class="toggle" style="opacity:0; pointer-events:none; margin-right:4px;">&nbsp;</span>`;
             }
 
-            html += `<span class="key">${key}:</span> `;
+            html += `<span class="key">${escapeHtml(key)}:</span> `;
 
             if (isObj) {
                 const count = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value).length}}`;
@@ -562,7 +662,8 @@ function buildJsonTree(data) {
                 let type = typeof value;
                 if (value === null) type = 'null';
                 let displayVal = value;
-                if (type === 'string') displayVal = `"${value}"`;
+                // Encode string values
+                if (type === 'string') displayVal = `"${escapeHtml(value)}"`;
 
                 html += `<span class="${type}">${displayVal}</span>`;
             }

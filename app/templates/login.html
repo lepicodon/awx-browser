@@ -23,6 +23,7 @@
         {% endwith %}
 
         <form action="{{ url_for('main.login') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-4">
                 <label for="awx_url" class="form-label text-uppercase text-xs fw-bold tracking-wider">AWX URL</label>
                 <div class="input-group">

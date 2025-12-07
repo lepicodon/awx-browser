@@ -4,3 +4,4 @@ __pycache__/
 .git/
 .DS_Store
 .env
+flask_session/
