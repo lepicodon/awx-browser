@@ -52,7 +52,7 @@ A modern, premium-designed web interface for visualizing and interacting with yo
 
 4. **Run the application**:
     ```bash
-    python app.py
+    python wsgi.py
     ```
 
 5. **Open your browser**:

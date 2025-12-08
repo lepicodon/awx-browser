@@ -1,10 +1,12 @@
 from flask import Flask
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
+import os
+import secrets
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'dev-secret-key-change-this'
+    app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
     
     # Security Config
     app.config['SESSION_TYPE'] = 'filesystem'
