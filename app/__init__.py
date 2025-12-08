@@ -10,10 +10,15 @@ def create_app():
     
     # Security Config
     app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
     app.config['SESSION_PERMANENT'] = False
     app.config['SESSION_USE_SIGNER'] = True
     Session(app)
     CSRFProtect(app)
+
+    # ProxyFix for Docker/K8s
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     
     from app.routes import main_bp
     app.register_blueprint(main_bp)
