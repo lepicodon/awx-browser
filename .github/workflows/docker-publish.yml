@@ -108,9 +108,3 @@ jobs:
           # ---------- Optional performance tweaks ----------
           # cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:cache
           # cache-to:   type=registry,ref=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:cache,mode=max
-
-      # -------------------------------------------------------------
-      # 6️⃣ (Optional) Echo the image digest for downstream steps
-      # -------------------------------------------------------------
-      - name: Image digest
-        run: echo "Image digest: ${{ steps.build.outputs.digest }}"
