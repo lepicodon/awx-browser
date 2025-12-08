@@ -54,7 +54,11 @@ jobs:
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: network=host
-          buildkit-stages-output: true
+
+      - name: Clean up Buildx builder
+        run: |
+          docker buildx rm || true
+          docker buildx create --name multiarch --driver docker-container --use --bootstrap
 
       # -------------------------------------------------------------
       # 3️⃣ Log in to GHCR
@@ -106,6 +110,7 @@ jobs:
           context: .
           file: ./Dockerfile                # adjust if Dockerfile in sub‑folder
           platforms: ${{ matrix.platform }} # e.g. linux/amd64
+          output: type=registry             # Use registry output for multi-arch
           push: true                        # <-- IMPORTANT, pushes after build
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
