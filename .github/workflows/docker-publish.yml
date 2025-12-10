@@ -7,17 +7,17 @@ name: Build & Push Docker image
 on:
   push:
     branches:
-      - main            # build on pushes to main (or change to your default)
+      - main # build on pushes to main (or change to your default)
     tags:
-      - 'v*'            # also build on version tags like v1.2.3
-  workflow_dispatch:   # allow manual runs from the UI
+      - "v*" # also build on version tags like v1.2.3
+  workflow_dispatch: # allow manual runs from the UI
 
 # -----------------------------------------------------------------
 # Permissions (only needed if you override defaults)
 # -----------------------------------------------------------------
 permissions:
-  contents: read            # needed for checkout
-  packages: write           # needed to push to ghcr.io
+  contents: read # needed for checkout
+  packages: write # needed to push to ghcr.io
   # id-token: write         # optional, for OIDC if you use it later
 
 # -----------------------------------------------------------------
@@ -29,11 +29,10 @@ jobs:
     # ---------------------------------------------------------------
     # Use a matrix if you want multi‑arch images (recommended!)
     # ---------------------------------------------------------------
-    strategy:
-      matrix:
-        # You can add more platforms, e.g. linux/arm64
-        platform: [linux/amd64, linux/arm64]
-
+    # runs-on: ubuntu-latest
+    # ---------------------------------------------------------------
+    # Single job for multi-arch build
+    # ---------------------------------------------------------------
     steps:
       # -------------------------------------------------------------
       # 1️⃣ Checkout the repo (including sub‑modules if you need them)
@@ -41,7 +40,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # fetch-depth: 0   # optional: needed for tags/versions
           submodules: true
 
       # -------------------------------------------------------------
@@ -49,18 +47,9 @@ jobs:
       # -------------------------------------------------------------
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: network=host
-
-      - name: Clean up Buildx builder
-        run: |
-          docker buildx rm || true
-          docker buildx create --name multiarch --driver docker-container --use --bootstrap
 
       # -------------------------------------------------------------
       # 3️⃣ Log in to GHCR
@@ -68,7 +57,6 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          # Use the default GITHUB_TOKEN (works for same‑repo pushes)
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -83,37 +71,22 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Image name (ghcr.io/<owner>/<repo>)
           images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
-
-          # Automatic tags:
-          #   - 'type=ref,event=branch'   → e.g. main
-          #   - 'type=ref,event=tag'      → e.g. v1.2.3
-          #   - 'type=sha'                → commit SHA (short)
-          #   - 'type=raw,value=latest'   → always add a "latest" tag on the default branch
           tags: |
             type=ref,event=branch
             type=ref,event=tag
             type=sha,format=short
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-          # Optional: add labels (git repo, build date, etc.)
-          labels: |
-            org.opencontainers.image.source=${{ github.repositoryUrl }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
       # -------------------------------------------------------------
       # 5️⃣ Build & Push the image (single command)
       # -------------------------------------------------------------
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
-        id: build
         with:
           context: .
-          file: ./Dockerfile                # adjust if Dockerfile in sub‑folder
-          platforms: ${{ matrix.platform }} # e.g. linux/amd64
-          output: type=registry             # Use registry output for multi-arch
-          push: true                        # <-- IMPORTANT, pushes after build
+          platforms: linux/amd64,linux/arm64
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
